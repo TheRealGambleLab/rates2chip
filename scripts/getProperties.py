@@ -44,6 +44,6 @@ if __name__ == '__main__':
 		bw_path = Path(b)
 		logger.debug(bw_path.stem)
 		region_df = getCoverage(out_df[['gene','chromosome','strand','start','stop']].copy(),bw_path)
-		out_df = pd.merge(out_df,region_df,how='outer',on='gene')
+		out_df = pd.merge(out_df,region_df,how='outer',on=['gene','chromosome','strand','start','stop'])
 	export_pandas(out_df,out_path)
 	

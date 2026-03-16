@@ -14,6 +14,7 @@ if __name__ == '__main__':
 	parser.add_argument('--target',help='target column')
 	parser.add_argument('--features',nargs='+',help='specific features to include')
 	parser.add_argument('--exclude',nargs='+',help='if features is empty, use all columns excluding these')
+	parser.add_argument('--filters',default=[],nargs='+',help='List of filters')
 	parser.add_argument('--plot_path',required=False,help='path to create plot of observed vs expected')
 	parser.add_argument('--seed',requried=False,type=int,help='seed for random forest regression')
 	parser.add_argument('--out',help='output path')
@@ -21,6 +22,22 @@ if __name__ == '__main__':
 
 	# Import data
 	df = import_pandas(Path(args.input))
+
+	# Subset data
+	for x in args.filters: 
+		if '==' in x:
+			df = df[df[x.split('==')[0]] == float(x.split('==')[1])]
+		elif '<=' in x:
+			df = df[df[x.split('<=')[0]] == float(x.split('<=')[1])]
+		elif '>=' in x:
+			df = df[df[x.split('>=')[0]] == float(x.split('>=')[1])]
+		elif '!=' in x:
+			df = df[df[x.split('!=')[0]] != float(x.split('!=')[1])]
+		elif '>' in x:
+			df = df[df[x.split('>')[0]] > float(x.split('>')[1])]
+		elif '<' in x:
+			df = df[df[x.split('<')[0]] == float(x.split('<')[1])]
+		else: raise Exception('Invalid filter')
 
 	# Identify target and features
 	target = args.target
