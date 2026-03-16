@@ -1,3 +1,4 @@
+import logging
 import argparse
 import numpy as np
 import pandas as pd
@@ -17,7 +18,16 @@ if __name__ == '__main__':
 	parser.add_argument('--filter',type=str,default='converged,replicated,valid_dependencies,~upper,~lower',help='coma separated list of boolean columns to filter by. use ~ to filter by negation of column')
 	parser.add_argument('--method',default='',help='window method to use')
 	parser.add_argument('--out',help='output path')
+	parser.add_argument('--debug',action='store_true')
 	args = parser.parse_args()
+
+	logger = logging.getLogger(__name__)
+	hdr = logging.StreamHandler()
+	fmt = logging.Formatter('%(asctime)s\t%(message)s','%Y-%m-%d %H:%M:%S')
+	hdr.setFormatter(fmt)
+	logger.addHandler(hdr)
+	if args.debug: logger.setLevel('DEBUG')
+	else: logger.setLevel('INFO')
 
 	out_path = Path(args.out)
 
@@ -32,9 +42,8 @@ if __name__ == '__main__':
 	# Get Bigwig
 	for b in args.bigwig:
 		bw_path = Path(b)
+		logger.debug(bw_path.stem)
 		region_df = getCoverage(out_df[['gene','chromosome','strand','start','stop']].copy(),bw_path)
 		out_df = pd.merge(out_df,region_df,how='outer',on='gene')
-	print(out_df)
-	quit()
 	export_pandas(out_df,out_path)
 	

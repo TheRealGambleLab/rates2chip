@@ -22,7 +22,6 @@ def getRegions(gene_df:pd.DataFrame,pro_df:pd.DataFrame|None=None,method:str='',
 	
 	return local_df
 
-
 def getCoverage(gene_df:pd.DataFrame, bw_path:Path):
 	# Create output column
 	col = bw_path.stem
@@ -31,7 +30,7 @@ def getCoverage(gene_df:pd.DataFrame, bw_path:Path):
 	# Get bigwig coverage
 	with pyBigWig.open(str(bw_path.absolute())) as bw:
 		for i,row in gene_df.iterrows():
-			gene_df.loc[i,col] = bw.stats(row['chromosome'],row['region_start'],row['region_stop'])
+			gene_df.loc[i,col] = bw.stats(row['chromosome'],row['start'],row['stop'])
 
 	gene_df = gene_df[['gene',col]]
 
