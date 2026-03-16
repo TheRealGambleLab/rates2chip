@@ -13,7 +13,15 @@ dependencies = [
 	"seaborn>=0.13.2",
 	"pysam>=0.22.1",
 	"pybigwig>=0.3.22",
-	"pyarrow>=16.0.0"
+	"pyarrow>=16.0.0",
+    "formats@git+ssh://git@github.com/TheRealGambleLab/skater-formats",
+    "annotate@git+ssh://git@github.com/TheRealGambleLab/skater-annotate",
+    "equations@git+ssh://git@github.com/TheRealGambleLab/skater-equations",
+    "loadSkater@git+ssh://git@github.com/TheRealGambleLab/skater-load",
+    "optimizeSkater@git+ssh://git@github.com/TheRealGambleLab/skater-optimize",
+    "optimizeTT@git+ssh://git@github.com/TheRealGambleLab/tt-optimize",
+    "loadTT@git+ssh://git@github.com/TheRealGambleLab/tt-load",
+    "output@git+ssh://git@github.com/TheRealGambleLab/skater-output"
 ]
 requires-python = ">=3.10.8"
 readme = "README.md"
@@ -25,3 +33,13 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = false
+
+[tool.uv.sources]
+formats = {path = "../skater-formats", editable = true}
+loadSkater = {path = "../skater-load", editable = true}
+annotate = {path = "../skater-annotate", editable = true}
+equations = {path = "../skater-equations", editable = true}
+optimizeSkater = {path = "../skater-optimize", editable = true}
+optimizeTT = {path = "../tt-optimize", editable = true}
+loadTT = {path = "../tt-load", editable = true}
+output = {path = "../skater-output", editable = true}

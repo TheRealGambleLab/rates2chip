@@ -69,7 +69,7 @@ def randomForest(df:pd.DataFrame,target:str,include_spearman:bool=True,seed:int=
 	weights = permutation_importance(model,x_train,y_train,n_repeats=100, random_state=seed,n_jobs=-1)
 
 	# Store in dataframe
-	data = pd.DataFrame({'Feature':x.columns,'Importance':model.feature_importances_,'Mean_Importance':weights.importances_mean,'Standard_Deviation':weights.importances_std})
+	data = pd.DataFrame({'Feature':x.columns,'Importance':model.feature_importances_,'Mean_Importance':weights.importances_mean,'Standard_Deviation':weights.importances_std}) # type: ignore
 
 	# Calculate correlations
 	if include_spearman:
@@ -78,7 +78,7 @@ def randomForest(df:pd.DataFrame,target:str,include_spearman:bool=True,seed:int=
 		for c in x.columns:
 			spearman = spearmanr(df[target].to_numpy(),df[c].to_numpy())
 			idx = data['Feature'] == c
-			data.loc[idx,'Correlation'] = spearman.statistic
-			data.loc[idx,'Pvalue'] = spearman.pvalue
+			data.loc[idx,'Correlation'] = spearman.statistic # type: ignore
+			data.loc[idx,'Pvalue'] = spearman.pvalue # type: ignore
 
 	return r2, mse, data
