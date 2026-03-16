@@ -1,0 +1,10 @@
+.venv
+.pdm-build
+*.parquet
+*.tsv
+*.txt
+*.out
+*.lock
+temp
+data
+old_files
