@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+
+import matplotlib
 import seaborn as sb
 import matplotlib.pyplot as plt
 
@@ -30,13 +32,13 @@ def clean_data(df:pd.DataFrame,target:str,log_columns:list[str],nan_columns:list
 
 	return df
 
-def randomForest(df:pd.DataFrame,target:str,include_spearman:bool=True,seed:int=42,quantile_target:bool=False,prediction_plot:Path|None=None) -> tuple[float,float,pd.DataFrame]:
+def randomForest(df:pd.DataFrame,target:str,include_spearman:bool=True,seed:int=42,reps:int=100,quantile_target:bool=False,prediction_plot:Path|None=None) -> tuple[float,float,pd.DataFrame]:
 	if quantile_target:
 		n_q = int(len(df.index))
 		df[target] = quantile_transform(df[target].to_frame(), n_quantiles=n_q,output_distribution='uniform',copy=True,subsample=n_q).squeeze()
 
 	# Clean data
-	x = df.drop(columns=[target],axis=1)
+	x = df.drop(columns=[target])
 	y = df[target]
 
 	# Split into train/test
@@ -64,9 +66,8 @@ def randomForest(df:pd.DataFrame,target:str,include_spearman:bool=True,seed:int=
 
 	# Evaluate
 	r2 = r2_score(y_test, y_pred)
-	print(r2)
 	mse = mean_squared_error(y_test,y_pred)
-	weights = permutation_importance(model,x_train,y_train,n_repeats=100, random_state=seed,n_jobs=-1)
+	weights = permutation_importance(model,x_train,y_train,n_repeats=reps, random_state=seed,n_jobs=-1)
 
 	# Store in dataframe
 	data = pd.DataFrame({'Feature':x.columns,'Importance':model.feature_importances_,'Mean_Importance':weights.importances_mean,'Standard_Deviation':weights.importances_std}) # type: ignore

@@ -12,16 +12,18 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--input',help='input rate path')
 	parser.add_argument('--target',help='target column')
-	parser.add_argument('--features',nargs='+',help='specific features to include')
-	parser.add_argument('--exclude',nargs='+',help='if features is empty, use all columns excluding these')
+	parser.add_argument('--features',nargs='+',default=[],help='specific features to include')
+	parser.add_argument('--exclude',nargs='+',default=[],help='if features is empty, use all columns excluding these')
 	parser.add_argument('--filters',default=[],nargs='+',help='List of filters')
 	parser.add_argument('--plot_path',required=False,help='path to create plot of observed vs expected')
-	parser.add_argument('--seed',requried=False,type=int,help='seed for random forest regression')
+	parser.add_argument('--seed',required=False,type=int,help='seed for random forest regression')
+	parser.add_argument('--n_reps',default=100,type=int,help='number of replicates for importance permutation')
 	parser.add_argument('--out',help='output path')
 	args = parser.parse_args()
 
 	# Import data
 	df = import_pandas(Path(args.input))
+	df.drop(columns=['gene','chromosome','strand','start','stop'],inplace=True)
 
 	# Subset data
 	for x in args.filters: 
@@ -41,8 +43,8 @@ if __name__ == '__main__':
 
 	# Identify target and features
 	target = args.target
-	if len(args.features) > 0: features = [f for f in args.features if f in df.columns]
-	else: features = [f for f in df.columns if f not in args.exclude]
+	if len(args.features) > 0: features = [f for f in args.features if f in df.columns and f != target]
+	else: features = [f for f in df.columns if f not in args.exclude and f != target]
 	include_columns = [target] + features
 	
 	# Subset data
@@ -53,10 +55,10 @@ if __name__ == '__main__':
 	if args.plot_path: plot_path = Path(args.plot_path)
 	else: plot_path = None
 	if args.seed: seed = args.seed
-	else: seed = cast(int,np.random.SeedSequence().entropy)
+	else: seed = int(np.random.randint(0, 2**32 - 1)) # Unable to use SeedSequence because sklearn wants 32bit seeds.
 
 	# Run regression
-	r2, mse, out_df = randomForest(df,target,True,seed,False,plot_path)
+	r2, mse, out_df = randomForest(df,target,True,seed,args.n_reps,False,plot_path)
 	out_df.sort_values(by='Importance', ascending=False, inplace=True)
 	print(f'R2: {r2:.3f}')
 	print(f'MSE: {mse:.3f}')
