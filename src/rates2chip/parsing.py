@@ -33,6 +33,4 @@ def getCoverage(gene_df:pd.DataFrame, bw_path:Path):
 			try: gene_df.loc[i,col] = bw.stats(row['chromosome'],row['start'],row['stop'])
 			except RuntimeError: gene_df.loc[i,col] = np.nan
 
-	gene_df = gene_df[['gene',col]]
-
 	return gene_df
