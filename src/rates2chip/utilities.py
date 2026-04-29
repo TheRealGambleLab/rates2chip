@@ -28,3 +28,20 @@ def tauC2rate(df:pd.DataFrame) -> pd.DataFrame:
 	df.loc[idx, 'value'] = (df.loc[idx,'stop'] - df.loc[idx,'start'])/df.loc[idx,'value']
 	df['type'] = df['type'].cat.rename_categories({'tauC': 'rate'})
 	return df
+
+def filter_df(input_df:pd.DataFrame,x:str) -> pd.DataFrame:
+	df = input_df.copy()
+	if '==' in x:
+		df = df[df[x.split('==')[0]] == float(x.split('==')[1])]
+	elif '<=' in x:
+		df = df[df[x.split('<=')[0]] <= float(x.split('<=')[1])]
+	elif '>=' in x:
+		df = df[df[x.split('>=')[0]] >= float(x.split('>=')[1])]
+	elif '!=' in x:
+		df = df[df[x.split('!=')[0]] != float(x.split('!=')[1])]
+	elif '>' in x:
+		df = df[df[x.split('>')[0]] > float(x.split('>')[1])]
+	elif '<' in x:
+		df = df[df[x.split('<')[0]] < float(x.split('<')[1])]
+	else: raise Exception('Invalid filter')
+	return df

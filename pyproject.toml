@@ -14,14 +14,7 @@ dependencies = [
 	"pysam>=0.22.1",
 	"pybigwig>=0.3.22",
 	"pyarrow>=16.0.0",
-    "formats@git+ssh://git@github.com/TheRealGambleLab/skater-formats",
-    "annotate@git+ssh://git@github.com/TheRealGambleLab/skater-annotate",
-    "equations@git+ssh://git@github.com/TheRealGambleLab/skater-equations",
-    "loadSkater@git+ssh://git@github.com/TheRealGambleLab/skater-load",
-    "optimizeSkater@git+ssh://git@github.com/TheRealGambleLab/skater-optimize",
-    "optimizeTT@git+ssh://git@github.com/TheRealGambleLab/tt-optimize",
-    "loadTT@git+ssh://git@github.com/TheRealGambleLab/tt-load",
-    "output@git+ssh://git@github.com/TheRealGambleLab/skater-output"
+    "optimizeTT@git+ssh://git@github.com/TheRealGambleLab/tt-optimize"
 ]
 requires-python = ">=3.10.8"
 readme = "README.md"

@@ -5,7 +5,7 @@ import pandas as pd
 from typing import cast
 from pathlib import Path
 
-from rates2chip.utilities import import_pandas, export_pandas
+from rates2chip.utilities import import_pandas, export_pandas, filter_df
 from rates2chip.random_forest import randomForest, clean_data
 
 if __name__ == '__main__':
@@ -13,6 +13,7 @@ if __name__ == '__main__':
 	parser.add_argument('--input',help='input rate path')
 	parser.add_argument('--target',help='target column')
 	parser.add_argument('--features',nargs='+',default=[],help='specific features to include')
+	parser.add_argument('--merge',nargs='+',default=[],help='parameters to merge. Should be structured as "feature_1,feature_2,...,feature_n:NEW_NAME"')
 	parser.add_argument('--exclude',nargs='+',default=[],help='if features is empty, use all columns excluding these')
 	parser.add_argument('--filters',default=[],nargs='+',help='List of filters')
 	parser.add_argument('--plot_path',required=False,help='path to create plot of observed vs expected')
@@ -27,19 +28,15 @@ if __name__ == '__main__':
 
 	# Subset data
 	for x in args.filters: 
-		if '==' in x:
-			df = df[df[x.split('==')[0]] == float(x.split('==')[1])]
-		elif '<=' in x:
-			df = df[df[x.split('<=')[0]] == float(x.split('<=')[1])]
-		elif '>=' in x:
-			df = df[df[x.split('>=')[0]] == float(x.split('>=')[1])]
-		elif '!=' in x:
-			df = df[df[x.split('!=')[0]] != float(x.split('!=')[1])]
-		elif '>' in x:
-			df = df[df[x.split('>')[0]] > float(x.split('>')[1])]
-		elif '<' in x:
-			df = df[df[x.split('<')[0]] == float(x.split('<')[1])]
-		else: raise Exception('Invalid filter')
+		df = filter_df(df,x)
+
+	# Merge features
+	for x in args.merge:
+		x = cast(str,x)
+		if (':' not in x) or (',' not in x): raise Exception('invalid formatting')
+		input_features = x.split(':')[0].split(',')
+		output_features = x.split(':')[-1]
+		df[output_features] = df[input_features].mean(axis=1)
 
 	# Identify target and features
 	target = args.target
