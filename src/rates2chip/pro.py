@@ -146,3 +146,94 @@ def calculateProIntervals(rate_df:pd.DataFrame,pro_df:pd.DataFrame,use_elongatio
 				data['stop'].append(gene_stop - pause_mask - start)
 			data['rate'].append(rate)
 	return pd.DataFrame(data)
+
+def getWindows(rate_df:pd.DataFrame,pro_df:pd.DataFrame,tss_offset:int=500,cps_offset:int=0,min_win_size:int=100,min_win_time:float=5.0, min_win_pol:int=1, max_win:int|None = None, merge_remainder:bool=False) -> pd.DataFrame:
+	# Group dataframes
+	rate_group = rate_df.groupby('gene',observed=True)
+	pro_group = pro_df.groupby('gene',observed=True)
+
+	# Allocate output dataframe
+	data = {'chromosome':[],'start':[],'stop':[],'strand':[],'gene':[],'value':[]}
+	for gene,df in rate_group:
+		# Get sequence properties
+		row = df[df['type'] == 'rate'].iloc[0]
+		gene_length = row['stop'] - row['start']
+
+		# Confirm elongation rate is converged and valid
+		if row['upper'] or row['lower'] or not row['converged'] or not row['replicated'] or not row['valid_dependencies']: continue
+		elif gene_length <= tss_offset + cps_offset: continue
+		elif not np.isfinite(row['value']) or row['value'] <= 0: continue
+
+		# Get PROseq dataframe
+		try: p_df = pro_group.get_group(gene)
+		except KeyError: continue
+
+		# Get TSS normalized polymerase counts
+		if row['strand'] == '+': pro_pos = p_df['pos'].to_numpy() - row['start']
+		else: pro_pos = row['stop'] - p_df['pos'].to_numpy()
+		pro_val = p_df['value'].to_numpy()
+		pro = np.zeros(gene_length + 1)
+		pro_mask = np.logical_and(pro_pos >= 0,pro_pos <= gene_length)
+		pro[pro_pos[pro_mask].astype(int)] = pro_val[pro_mask]
+		if np.nansum(pro) <= 0: continue
+
+		# Calculate time2nt with the same single-CPS setup used by optimizeTT.
+		time2nt = tau(np.array([0,row['value']]),pro,np.array([(gene_length,0)]))
+
+		# Get transcript-relative window breakpoints. Windows cover [tss_offset, gene_length - cps_offset) without leaving a short tail.
+		window_start = tss_offset
+		window_stop = gene_length - cps_offset
+		if window_start >= window_stop: continue
+		pairs = []
+		window_rates = []
+		for i in range(window_start + 1,window_stop + 1):
+			# Window is too small
+			if i - window_start < min_win_size: continue
+
+			# Calculate time change between current position and window start
+			delta = time2nt[i] - time2nt[window_start]
+
+			# Check if has enough time or polymerases
+			if delta <= 0 or delta < min_win_time: continue
+			elif np.nansum(pro[window_start:i]) < min_win_pol: continue
+
+			# Add window
+			pairs.append((window_start,i))
+			window_rates.append((i - window_start) / delta)
+			
+			# Begin new window
+			window_start = i
+
+		# Assign any terminal sequence that cannot satisfy the minimums
+		# to the last valid window.
+		if merge_remainder:
+			if window_start < window_stop:
+				if len(pairs) == 0: continue
+				pairs[-1] = (pairs[-1][0],window_stop)
+				delta = time2nt[pairs[-1][1]] - time2nt[pairs[-1][0]]
+				if delta <= 0: continue
+				window_rates[-1] = (pairs[-1][1] - pairs[-1][0]) / delta
+
+		# Get absolute genomic positions
+		if max_win:
+			if len(pairs) > max_win:
+				pairs = pairs[:max_win]
+				window_rates = window_rates[:max_win]
+		if len(pairs) == 0: continue
+		pairs = np.array(pairs)
+		if row['strand'] == '+': pairs = pairs + row['start']
+		else: pairs = row['stop'] - pairs[:,[1,0]]
+
+		# Add to data
+		data['chromosome'].extend([row['chromosome'] for _ in range(len(pairs))])
+		data['strand'].extend([row['strand'] for _ in range(len(pairs))])
+		data['gene'].extend([row['gene'] for _ in range(len(pairs))])
+		data['start'].extend(pairs[:,0])
+		data['stop'].extend(pairs[:,1])
+		data['value'].extend(window_rates)
+
+	# Convert to dataframe
+	data = pd.DataFrame(data)
+	data.drop_duplicates(inplace=True)
+	data.reset_index(inplace=True,drop=True)
+	return data
