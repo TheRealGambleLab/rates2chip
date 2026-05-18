@@ -22,7 +22,7 @@ def getRegions(gene_df:pd.DataFrame,pro_df:pd.DataFrame|None=None,method:str='',
 	
 	return local_df
 
-def getCoverage(gene_df:pd.DataFrame, bw_path:Path):
+def getCoverage(gene_df:pd.DataFrame, bw_path:Path) -> pd.Series:
 	# Create output column
 	col = bw_path.stem
 	gene_df[col] = 0.0
@@ -33,4 +33,4 @@ def getCoverage(gene_df:pd.DataFrame, bw_path:Path):
 			try: gene_df.loc[i,col] = bw.stats(row['chromosome'],row['start'],row['stop'])
 			except RuntimeError: gene_df.loc[i,col] = np.nan
 
-	return gene_df
+	return gene_df[col]

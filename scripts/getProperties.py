@@ -44,9 +44,9 @@ if __name__ == '__main__':
 		if args.pro_path: 
 			rate_df = rate_df[rate_df['type'] == 'rate']
 			pro_df = import_pandas(Path(args.pro_path))
-			getWindows(rate_df,pro_df,args.tss_offset,args.cps_offset,args.min_len,args.min_time,args.min_pro,args.max_windows)
+			out_df = getWindows(rate_df,pro_df,args.tss_offset,args.cps_offset,args.min_len,args.min_time,args.min_pro,args.max_windows)
 		else: 
-			rate_df = rate_df[rate_df['type'] == 'elongation']
+			out_df = rate_df[rate_df['type'] == 'elongation']
 	
 	else: out_df = import_pandas(out_path)
 
@@ -54,7 +54,6 @@ if __name__ == '__main__':
 	for b in args.bigwig:
 		bw_path = Path(b)
 		logger.debug(bw_path.stem)
-		region_df = getCoverage(out_df[['gene','chromosome','strand','start','stop']].copy(),bw_path)
-		out_df = pd.merge(out_df,region_df,how='outer',on=['gene','chromosome','strand','start','stop'])
+		out_df[bw_path.stem] = getCoverage(out_df[['gene','chromosome','strand','start','stop']].copy(),bw_path)
 	export_pandas(out_df,out_path)
 	
