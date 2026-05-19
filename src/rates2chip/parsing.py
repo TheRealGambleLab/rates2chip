@@ -30,7 +30,7 @@ def getCoverage(gene_df:pd.DataFrame, bw_path:Path) -> pd.Series:
 	# Get bigwig coverage
 	with pyBigWig.open(str(bw_path.absolute())) as bw:
 		for i,row in gene_df.iterrows():
-			try: gene_df.loc[i,col] = bw.stats(row['chromosome'],row['start'],row['stop'])
+			try: gene_df.loc[i,col] = bw.stats(row['chromosome'],row['start'],row['stop'],exact=True,nBins=1)[0]
 			except RuntimeError: gene_df.loc[i,col] = np.nan
 
 	return gene_df[col]

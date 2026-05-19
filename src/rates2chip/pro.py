@@ -237,3 +237,42 @@ def getWindows(rate_df:pd.DataFrame,pro_df:pd.DataFrame,tss_offset:int=500,cps_o
 	data.drop_duplicates(inplace=True)
 	data.reset_index(inplace=True,drop=True)
 	return data
+
+def getRandomWindows(input_df:pd.DataFrame,seed:int,n_random:int,max_window_size:int) -> pd.DataFrame:
+	rng = np.random.default_rng(seed)
+	input_df = input_df.copy()
+	input_df['window_size'] = input_df['stop'] - input_df['start']
+
+	# Random intervals are drawn from gene spans represented in the input table.
+	# This keeps the null distribution intragenic instead of drifting into intergenic sequence.
+	gene_df = input_df.groupby(['gene','chromosome'],observed=True).agg(min_start=('start','min'),max_stop=('stop','max')).reset_index()
+	gene_df['available'] = gene_df['max_stop'] - gene_df['min_start']
+
+	window_sizes:np.ndarray = np.sort(input_df.loc[(input_df['window_size'] > 0) & (input_df['window_size'] <= max_window_size),'window_size'].unique())
+
+	data = {'gene':[],'chromosome':[],'strand':[],'start':[],'stop':[],'window_size':[]}
+	for window_size in window_sizes:
+		valid_genes = gene_df[gene_df['available'] >= cast(float,window_size)].copy()
+		if valid_genes.empty:
+			continue
+
+		valid_genes['n_start_positions'] = valid_genes['available'] - window_size + 1
+		weights = valid_genes['n_start_positions'].to_numpy(dtype=float)
+		weights = weights / weights.sum()
+		gene_idx = rng.choice(valid_genes.index.to_numpy(),size=n_random,replace=True,p=weights)
+
+		for idx in gene_idx:
+			row = valid_genes.loc[idx]
+			low = int(row['min_start'])
+			high = int(row['max_stop'] - window_size)
+			start = int(rng.integers(low,high + 1))
+			stop = start + int(window_size)
+
+			data['gene'].append(row['gene'])
+			data['chromosome'].append(row['chromosome'])
+			data['strand'].append('+')
+			data['start'].append(start)
+			data['stop'].append(stop)
+			data['window_size'].append(window_size)
+
+	return pd.DataFrame(data)
