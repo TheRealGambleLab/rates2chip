@@ -5,7 +5,7 @@ from typing import cast
 from pathlib import Path
 
 from rates2chip.pro import getWindows
-from rates2chip.utilities import import_pandas, export_pandas, subset_pandas, getSkaterWindows
+from rates2chip.utilities import import_pandas, export_pandas, subset_pandas, getSkaterWindows, tauC2rate
 
 
 if __name__ == '__main__':
@@ -35,6 +35,8 @@ if __name__ == '__main__':
 
 	# Get gene properties
 	rate_df = import_pandas(Path(args.rates))
+	if 'tauC' in rate_df['type'].unique():
+		rate_df = tauC2rate(rate_df)
 	filters = cast(str,args.filter).split(',')
 	if args.pro_path: 
 		rate_df = subset_pandas(rate_df,filters)

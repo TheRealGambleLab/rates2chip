@@ -59,10 +59,12 @@ def getSkaterWindows(rate_df:pd.DataFrame,filters:list[str],tss_offset:int,cps_o
 	return trimTssWindows(pd.concat([gene_rates,windows]),tss_offset,cps_offset)
 
 def tauC2rate(df:pd.DataFrame) -> pd.DataFrame:
-	df['type'] = df['type'].astype('category')
+	df = df.copy()
 	idx = df['type'] == 'tauC'
 	df.loc[idx, 'value'] = (df.loc[idx,'stop'] - df.loc[idx,'start'])/df.loc[idx,'value']
-	df['type'] = df['type'].cat.rename_categories({'tauC': 'rate'})
+	df['type'] = df['type'].astype('object')
+	df.loc[idx, 'type'] = 'rate'
+	df['type'] = df['type'].astype('category')
 	return df
 
 def filter_df(input_df:pd.DataFrame,x:str) -> pd.DataFrame:
