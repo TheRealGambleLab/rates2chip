@@ -5,7 +5,7 @@ from typing import cast
 from pathlib import Path
 
 from rates2chip.pro import getWindows
-from rates2chip.utilities import import_pandas, export_pandas, subset_pandas
+from rates2chip.utilities import import_pandas, export_pandas, subset_pandas, getSkaterWindows
 
 
 if __name__ == '__main__':
@@ -34,12 +34,14 @@ if __name__ == '__main__':
 	out_path = Path(args.out)
 
 	# Get gene properties
-	rate_df = subset_pandas(import_pandas(Path(args.rates)),cast(str,args.filter).split(','))
+	rate_df = import_pandas(Path(args.rates))
+	filters = cast(str,args.filter).split(',')
 	if args.pro_path: 
+		rate_df = subset_pandas(rate_df,filters)
 		rate_df = rate_df[rate_df['type'] == 'rate']
 		pro_df = import_pandas(Path(args.pro_path))
 		out_df = getWindows(rate_df,pro_df,args.tss_offset,args.cps_offset,args.min_len,args.min_time,args.min_pro,args.max_windows)
-	else: 
-		out_df = rate_df[rate_df['type'] == 'elongation']
+	else:
+		out_df = getSkaterWindows(rate_df,filters,args.tss_offset,args.cps_offset)
 	
 	export_pandas(out_df,out_path)
